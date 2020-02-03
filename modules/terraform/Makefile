@@ -15,11 +15,11 @@ terraform/install:
 	$(TERRAFORM) version
 
 ## Ensure all plugins can be fetched
-terraform/get-plugins:
+terraform/get-plugins: %get-plugins: %install
 	@$(TERRAFORM) init -get-plugins -backend=false -input=false >/dev/null
 
 ## Ensure all modules can be fetched
-terraform/get-modules:
+terraform/get-modules: %get-modules: %install
 	@$(TERRAFORM) init -get -backend=false -input=false >/dev/null
 
 ## Basic terraform sanity check
