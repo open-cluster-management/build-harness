@@ -15,11 +15,11 @@ terraform/install:
 	$(TERRAFORM) version
 
 ## Ensure all plugins can be fetched
-terraform/get-plugins: %get-plugins: %install
+terraform/get-plugins:
 	@$(TERRAFORM) init -get-plugins -backend=false -input=false >/dev/null
 
 ## Ensure all modules can be fetched
-terraform/get-modules: %get-modules: %install
+terraform/get-modules:
 	@$(TERRAFORM) init -get -backend=false -input=false >/dev/null
 
 ## Basic terraform sanity check
@@ -38,13 +38,15 @@ terraform/lint:
 .PHONY: terraform/apply
 ## Run terraform apply with -var-file (TERRAFORM_VARS_FILE) in dir (TERRAFORM_DIR)
 terraform/apply: %apply: %get-plugins %get-modules %validate
+	@$(shell $(SELF) terraform/install 1&>2 /dev/null)
 	@$(TERRAFORM) apply -input=false -auto-approve -var-file="$(TERRAFORM_VARS_FILE)" -state="$(TERRAFORM_STATE_FILE)" $(TERRAFORM_DIR)
 
 .PHONY: terraform/destroy
 ## Destroy terraform resources
 terraform/destroy: %destroy: %get-plugins %get-modules
 ifeq ($(shell test -d $(TERRAFORM_DIR) && echo -n yes),yes)
-	@$(TERRAFORM_EXPORTS); $(TERRAFORM) destroy -input=false -force -var-file="$(TERRAFORM_VARS_FILE)" -state="$(TERRAFORM_STATE_FILE)" $(TERRAFORM_DIR)
+	@$(shell $(SELF) terraform/install 1&>2 /dev/null)
+	@$(TERRAFORM) destroy -input=false -force -var-file="$(TERRAFORM_VARS_FILE)" -state="$(TERRAFORM_STATE_FILE)" $(TERRAFORM_DIR)
 endif
 
 ## Upgrade all terraform module sources
