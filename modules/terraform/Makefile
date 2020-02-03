@@ -1,12 +1,12 @@
 TMP ?= /tmp
 TERRAFORM ?= $(BUILD_HARNESS_PATH)/vendor/terraform
 TERRAFORM_VERSION ?= 0.11.11
-TERRAFORM_URL ?= https://releases.hashicorp.com/terraform/$(TERRAFORM_VERSION)/terraform_$(TERRAFORM_VERSION)_$(OS)_$(BUILD_HARNESS_ARCH).zip
+TERRAFORM_URL ?= https://releases.hashicorp.com/terraform/$(TERRAFORM_VERSION)/terraform_$(TERRAFORM_VERSION)_$(BUILD_HARNESS_OS)_$(BUILD_HARNESS_ARCH).zip
 
 ## Install terraform
 terraform/install:
 	@[ -x $(TERRAFORM) ] || ( \
-		echo "Installing Terraform $(TERRAFORM_VERSION) ($(OS)) from $(TERRAFORM_URL)" && \
+		echo "Installing Terraform $(TERRAFORM_VERSION) ($(BUILD_HARNESS_OS)) from $(TERRAFORM_URL)" && \
 		curl '-#' -fL -o $(TMP)/terraform.zip $(TERRAFORM_URL) && \
 		unzip -q -d $(TMP)/ $(TMP)/terraform.zip && \
 		mv $(TMP)/terraform $(TERRAFORM) && \
@@ -34,6 +34,18 @@ endif
 terraform/lint:
 	@FAIL=`$(TERRAFORM) fmt -write=false | xargs --no-run-if-empty -n 1 printf '\t- %s\n'`; \
 	[ -z "$$FAIL" ] || (echo "Terraform configuration needs linting. Run '$(TERRAFORM) fmt'"; echo $$FAIL; exit 1)
+
+.PHONY: terraform/apply
+## Run terraform apply with -var-file (TERRAFORM_VARS_FILE) in dir (TERRAFORM_DIR)
+terraform/apply: %apply: %get-plugins %get-modules %validate
+	@$(TERRAFORM) apply -input=false -auto-approve -var-file="$(TERRAFORM_VARS_FILE)" -state="$(TERRAFORM_STATE_FILE)" $(TERRAFORM_DIR)
+
+.PHONY: terraform/destroy
+## Destroy terraform resources
+terraform/destroy: %destroy: %get-plugins %get-modules
+ifeq ($(shell test -d $(TERRAFORM_DIR) && echo -n yes),yes)
+	@$(TERRAFORM_EXPORTS); $(TERRAFORM) destroy -input=false -force -var-file="$(TERRAFORM_VARS_FILE)" -state="$(TERRAFORM_STATE_FILE)" $(TERRAFORM_DIR)
+endif
 
 ## Upgrade all terraform module sources
 terraform/upgrade-modules: packages/install/json2hcl
