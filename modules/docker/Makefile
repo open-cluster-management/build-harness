@@ -89,6 +89,8 @@ DOCKER_TO_NAMESPACE ?= $(DOCKER_FROM_NAMESPACE)
 DOCKER_TO_IMAGE ?= $(DOCKER_FROM_IMAGE)
 DOCKER_TO_TAG ?= $(DOCKER_FROM_TAG)
 DOCKER_ADDTL_TAG ?=
+DOCKER_IMAGE_AND_TAG ?= $(DOCKER_IMAGE):$(DOCKER_BUILD_TAG)
+
 
 .PHONY : docker/deps docker/info docker/build docker/push docker/pull docker/clean docker/run docker/shell docker/attach docker/update docker/start docker/stop docker/rm docker/logs docker/manifest-tool docker/enable-experimental-cli docker/multi-arch docker/copy
 
@@ -120,8 +122,8 @@ docker/info:
 ## Build a docker image
 docker/build:
 	@$(SELF) docker/deps
-	@echo "INFO: Building $(DOCKER_IMAGE):$(DOCKER_BUILD_TAG) using $(DOCKER_BUILD_PATH)/$(DOCKER_FILE) on docker $(DOCKER_SERVER_VERSION) $(DOCKER_BUILD_OPTS)"
-	@cd $(DOCKER_BUILD_PATH) && cp $(DOCKER_FILE) $(DOCKER_FILE).tmp && echo -e '\nLABEL build-utility=$(DOCKER_BUILD_UTILITY)' >> $(DOCKER_FILE).tmp && $(DOCKER) build $(DOCKER_BUILD_OPTS) -t "$(DOCKER_IMAGE):$(DOCKER_BUILD_TAG)" -f $(DOCKER_FILE).tmp . && rm $(DOCKER_FILE).tmp
+	@echo "INFO: Building $(DOCKER_IMAGE_AND_TAG) using $(DOCKER_BUILD_PATH)/$(DOCKER_FILE) on docker $(DOCKER_SERVER_VERSION) $(DOCKER_BUILD_OPTS)"
+	@cd $(DOCKER_BUILD_PATH) && cp $(DOCKER_FILE) $(DOCKER_FILE).tmp && echo -e '\nLABEL build-utility=$(DOCKER_BUILD_UTILITY)' >> $(DOCKER_FILE).tmp && $(DOCKER) build $(DOCKER_BUILD_OPTS) -t "$(DOCKER_IMAGE_AND_TAG)" -f $(DOCKER_FILE).tmp . && rm $(DOCKER_FILE).tmp
 
 ## Push image to Docker Hub
 docker/push:
@@ -149,42 +151,42 @@ docker/test:
 ## Tag the last built image with an architecture-specific`DOCKER_TAG`
 docker/tag:
 	@$(SELF) docker/deps
-	@echo INFO: Tagging $(DOCKER_IMAGE):$(DOCKER_BUILD_TAG) as $(DOCKER_URI)
+	@echo INFO: Tagging $(DOCKER_IMAGE_AND_TAG) as $(DOCKER_URI)
 ifeq ($(findstring 1.9.1,$(DOCKER_SERVER_VERSION)),1.9.1)
-	@$(DOCKER) tag -f "$(DOCKER_IMAGE):$(DOCKER_BUILD_TAG)" "$(DOCKER_URI)"
+	@$(DOCKER) tag -f "$(DOCKER_IMAGE_AND_TAG)" "$(DOCKER_URI)"
 else
-	@$(DOCKER) tag "$(DOCKER_IMAGE):$(DOCKER_BUILD_TAG)" "$(DOCKER_URI)"
+	@$(DOCKER) tag "$(DOCKER_IMAGE_AND_TAG)" "$(DOCKER_URI)"
 endif
 
 ## Tag the last built image with `DOCKER_TAG`
 docker/tag-arch:
 	@$(SELF) docker/deps
-	@echo INFO: Tagging $(DOCKER_IMAGE):$(DOCKER_BUILD_TAG) as $(DOCKER_ARCH_URI)
+	@echo INFO: Tagging $(DOCKER_IMAGE_AND_TAG) as $(DOCKER_ARCH_URI)
 ifeq ($(findstring 1.9.1,$(DOCKER_SERVER_VERSION)),1.9.1)
-	@$(DOCKER) tag -f "$(DOCKER_IMAGE):$(DOCKER_BUILD_TAG)" "$(DOCKER_ARCH_URI)"
+	@$(DOCKER) tag -f "$(DOCKER_IMAGE_AND_TAG)" "$(DOCKER_ARCH_URI)"
 else
-	@$(DOCKER) tag "$(DOCKER_IMAGE):$(DOCKER_BUILD_TAG)" "$(DOCKER_ARCH_URI)"
+	@$(DOCKER) tag "$(DOCKER_IMAGE_AND_TAG)" "$(DOCKER_ARCH_URI)"
 endif
 
 ## Remove existing docker images
 docker/clean:
 	@$(SELF) docker/deps
-	@echo INFO: Clean $(DOCKER_IMAGE):$(DOCKER_BUILD_TAG), $(DOCKER_URI)
-	@$(DOCKER) rmi -f "$(DOCKER_IMAGE):$(DOCKER_BUILD_TAG)"
+	@echo INFO: Clean $(DOCKER_IMAGE_AND_TAG), $(DOCKER_URI)
+	@$(DOCKER) rmi -f "$(DOCKER_IMAGE_AND_TAG)"
 	@$(DOCKER) rmi -f "$(DOCKER_URI)"
 	$(eval DOCKER_BUILD_OPTS += --no-cache=true)
 
 ## Test drive the image
 docker/run:
 	@$(SELF) docker/deps
-	@echo "INFO: Running $(DOCKER_IMAGE):$(DOCKER_BUILD_TAG) as $(DOCKER_CONTAINER_NAME) with $(DOCKER_RUN_OPTS)" 
-	@$(DOCKER) run $(DOCKER_RUN_OPTS) --name "$(DOCKER_CONTAINER_NAME)" $(DOCKER_NETWORK_OP) $(DOCKER_NETWORK) $(DOCKER_IP_OP) $(DOCKER_IP) --rm -p "$(DOCKER_BIND_PORT)" -t -i "$(DOCKER_IMAGE):$(DOCKER_BUILD_TAG)"
+	@echo "INFO: Running $(DOCKER_IMAGE_AND_TAG) as $(DOCKER_CONTAINER_NAME) with $(DOCKER_RUN_OPTS)" 
+	@$(DOCKER) run $(DOCKER_RUN_OPTS) --name "$(DOCKER_CONTAINER_NAME)" $(DOCKER_NETWORK_OP) $(DOCKER_NETWORK) $(DOCKER_IP_OP) $(DOCKER_IP) --rm -p "$(DOCKER_BIND_PORT)" -t -i "$(DOCKER_IMAGE_AND_TAG)"
 
 ## Run the container and start a shell
 docker/shell:
 	@$(SELF) docker/deps
 	@echo INFO: Starting shell in $(DOCKER_IMAGE) as $(DOCKER_CONTAINER_NAME) with $(DOCKER_BIND_PORT)
-	@$(DOCKER) run --name "$(DOCKER_CONTAINER_NAME)" --rm -p "$(DOCKER_BIND_PORT)" -t -i --volume "$(shell pwd):/opt" --entrypoint="$(DOCKER_SHELL)"  "$(DOCKER_IMAGE):$(DOCKER_BUILD_TAG)" -c $(DOCKER_SHELL)
+	@$(DOCKER) run --name "$(DOCKER_CONTAINER_NAME)" --rm -p "$(DOCKER_BIND_PORT)" -t -i --volume "$(shell pwd):/opt" --entrypoint="$(DOCKER_SHELL)"  "$(DOCKER_IMAGE_AND_TAG)" -c $(DOCKER_SHELL)
 
 ## Attach to the running container
 docker/attach:
