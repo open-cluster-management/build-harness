@@ -1,5 +1,5 @@
 # Docker client
-DOCKER := $(shell which docker)
+DOCKER := $(shell which docker 2> /dev/null)
 
 # Jot is for OSX, and shuf is for Linux
 RANDOM_PORT ?= $(shell jot -r 1  2000 65000 2>/dev/null || shuf -i 2000-65000 -n 1 2>/dev/null)
