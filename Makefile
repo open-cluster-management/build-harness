@@ -54,6 +54,3 @@ ifndef TRANSLATE_COLON_NOTATION
 endif
 
 endif
-
-# builder/build is defined in templates/Makefile.build-harness
-build: builder/build
