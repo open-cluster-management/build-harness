@@ -1,5 +1,6 @@
+<!-- markdownlint-disable -->
 ## Makefile Targets
-```
+```text
 Available targets:
 
   aws/install                         Install aws cli bundle
@@ -7,6 +8,7 @@ Available targets:
   bash/lint                           Lint all bash scripts
   chamber/install                     Install chamber
   chamber/shell                       Start a chamber shell with secrets exported to the environment
+  clean                               Clean build-harness
   codefresh/export                    DEPRECATED!!! Export codefresh additional envvars
   codefresh/notify/slack/build        Send notification from codefresh to slack using "build" template
   codefresh/notify/slack/deploy       Send notification from codefresh to slack using "deploy" template
@@ -95,6 +97,7 @@ Available targets:
   help                                Help screen
   help/all                            Display help for all targets
   help/short                          This help short screen
+  init                                Init build-harness
   jenkins/run-job-with-tag            Run a Jenkins Job with $(TAG)
   make/lint                           Lint all makefiles
   packages/delete                     Delete packages
@@ -113,13 +116,17 @@ Available targets:
   slack/notify/deploy                 Send notification to slack using "deploy" template
   template/build                      Create $OUT file by building it from $IN template file
   template/deps                       Install dependencies
+  terraform/bump-tf-12-min-version    Rewrite versions.tf to bump modules with minimum core version of '0.12.x' to '>= 0.12.26'
   terraform/get-modules               Ensure all modules can be fetched
   terraform/get-plugins               Ensure all plugins can be fetched
   terraform/install                   Install terraform
   terraform/lint                      Lint check Terraform
-  terraform/upgrade-modules           Upgrade all terraform module sources
+  terraform/loosen-constraints        and convert "~>" constraints to ">=".
+  terraform/rewrite-required-providers Rewrite versions.tf to update existing configuration to add an explicit source attribute for each provider
+  terraform/upgrade-modules           This target has not been upgraded to handle registry format
   terraform/validate                  Basic terraform sanity check
   travis/docker-login                 Login into docker hub
   travis/docker-tag-and-push          Tag & Push according Travis environment variables
 
 ```
+<!-- markdownlint-restore -->

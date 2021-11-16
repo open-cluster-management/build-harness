@@ -1,34 +1,39 @@
 GITHUB_TEMPLATES = \
 	.github/CODEOWNERS \
-	.github/workflows/auto-greet.yml \
-	.github/workflows/auto-assign.yml \
-	.github/workflows/auto-label.yml \
-	.github/workflows/auto-readme.yml \
-	.github/workflows/slash-command-dispatch.yml \
-	.github/ISSUE_TEMPLATE/config.yml \
 	.github/PULL_REQUEST_TEMPLATE.md \
+	.github/ISSUE_TEMPLATE/config.yml \
 	.github/ISSUE_TEMPLATE/feature_request.md \
 	.github/ISSUE_TEMPLATE/bug_report.md \
-	.github/ISSUE_TEMPLATE/question.md
+	.github/ISSUE_TEMPLATE/question.md \
+	.github/auto-release.yml \
+	.github/workflows/auto-release.yml \
+	.github/workflows/validate-codeowners.yml
+
+# Install extra configuration for terraform projects
+GITHUB_TERRAFORM_TEMPLATES = .github/workflows/chatops.yml \
+	.github/workflows/auto-context.yml \
+	.github/workflows/auto-format.yml \
+	.github/mergify.yml \
+	.github/renovate.json
+
 
 $(GITHUB_TEMPLATES): $(addprefix $(BUILD_HARNESS_PATH)/templates/, $(GITHUB_TEMPLATES))
 	mkdir -p $(dir $@)
 	cp $(BUILD_HARNESS_PATH)/templates/$@ $@
 	git ls-files --error-unmatch $@ 2>/dev/null || git add $@
 
-.github/auto-assign.yml:: # do not overwrite config by default
+$(GITHUB_TERRAFORM_TEMPLATES): $(addprefix $(BUILD_HARNESS_PATH)/templates/terraform/, $(GITHUB_TERRAFORM_TEMPLATES))
 	mkdir -p $(dir $@)
-	cp $(BUILD_HARNESS_PATH)/templates/$@ $@
+	cp $(BUILD_HARNESS_PATH)/templates/terraform/$@ $@
 	git ls-files --error-unmatch $@ 2>/dev/null || git add $@
 
-.github/auto-label.yml:: # do not overwrite config by default
-	mkdir -p $(dir $@)
-	cp $(BUILD_HARNESS_PATH)/templates/$@ $@
-	git ls-files --error-unmatch $@ 2>/dev/null || git add $@
+github/init/context.tf:
+	curl -o context.tf -fsSL https://raw.githubusercontent.com/cloudposse/terraform-null-label/master/exports/context.tf
+	git ls-files --error-unmatch context.tf 2>/dev/null || git add context.tf
+	@if [[ -d examples/complete ]]; then \
+		cp -p context.tf examples/complete/context.tf ; \
+	fi
 
-.github/slash-command-dispatch.yml:: # do not overwrite config by default
-	mkdir -p $(dir $@)
-	cp $(BUILD_HARNESS_PATH)/templates/$@ $@
-	git ls-files --error-unmatch $@ 2>/dev/null || git add $@
+.PHONY: $(GITHUB_TEMPLATES) $(GITHUB_TERRAFORM_TEMPLATES) github/init/context.tf
 
-github/init: $(GITHUB_TEMPLATES) .github/auto-assign.yml .github/auto-label.yml .github/slash-command-dispatch.yml
+github/init: $(GITHUB_TEMPLATES) $(if $(wildcard *.tf),$(GITHUB_TERRAFORM_TEMPLATES) github/init/context.tf)
